@@ -1,0 +1,121 @@
+
+<div class="upsell-radio-group" data-variant-id="1234567890">
+  <label>
+    <input type="radio" name="upsell_option" value="2">
+    Get 2x for a better deal!
+  </label><br>
+  <label>
+    <input type="radio" name="upsell_option" value="3">
+    Get 3x for even more savings!
+  </label>
+</div>
+
+
+
+<script>
+document.querySelectorAll(".upsell-radio-group input[type='radio']").forEach(radio => {
+  radio.addEventListener("change", async (event) => {
+    const selected = event.target;
+    const quantity = parseInt(selected.value);
+    const group = selected.closest(".upsell-radio-group");
+    const variantId = group.dataset.variantId;
+
+    if (!variantId || isNaN(quantity)) return;
+
+    // Visually and logically "disable" unselected options (but don't use disabled attribute)
+    group.querySelectorAll("input[type='radio']").forEach(r => {
+      if (r !== selected) {
+        r.classList.add("visually-disabled");
+        r.dataset.disabled = "true"; // flag to block click later
+      } else {
+        r.classList.remove("visually-disabled");
+        r.dataset.disabled = "false";
+      }
+    });
+
+    // Add to cart
+    const response = await fetch("/cart/add.js", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: [{
+          id: parseInt(variantId),
+          quantity: quantity
+        }]
+      })
+    });
+
+    window.updateCartContents(response);
+
+    const cartDrawer = document.querySelector("#offcanvas-cart");
+    if (cartDrawer) {
+      const bsOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(cartDrawer);
+      bsOffcanvas.show();
+    }
+  });
+});
+
+// Prevent clicks on visually-disabled radios
+document.querySelectorAll(".upsell-radio-group input[type='radio']").forEach(radio => {
+  radio.addEventListener("click", (e) => {
+    if (radio.dataset.disabled === "true") {
+      e.preventDefault();
+    }
+  });
+});
+</script>
+
+<style>
+input.form-check-input.visible-disable {
+    pointer-events: none;
+    cursor: not-allowed;
+    opacity: .5;
+    /* display: none; */
+}
+
+</style>
+
+
+<script>
+document.querySelectorAll("input[name='product-qty-breaks']").forEach(radio => {
+  radio.addEventListener("change", async (event) => {
+    const selected = event.target;
+    const quantity = parseInt(selected.value);
+    const variantId = selected.dataset.variantId;
+
+    if (!variantId || isNaN(quantity)) return;
+
+    // Disable unselected radios
+    document.querySelectorAll("input[name='product-qty-breaks']").forEach(r => {
+      if (r !== selected) {
+        r.classList.add("visible-disable");
+      } else {
+        r.classList.remove("visible-disable");
+      }
+    });
+
+    // Add to cart
+    const response = await fetch("/cart/add.js", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: [{
+          id: parseInt(variantId),
+          quantity: quantity
+        }]
+      })
+    });
+
+    // Update Shopiweb cart drawer
+    if (typeof window.updateCartContents === "function") {
+      window.updateCartContents(response);
+    }
+
+    const cartDrawer = document.querySelector("#offcanvas-cart");
+    if (cartDrawer) {
+      const bsOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(cartDrawer);
+      bsOffcanvas.show();
+    }
+  });
+});
+</script>
